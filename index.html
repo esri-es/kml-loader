@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+<title></title>
+
+<link rel="stylesheet" href="https://js.arcgis.com/3.15/dijit/themes/tundra/tundra.css">
+<link rel="stylesheet" href="https://js.arcgis.com/3.15/esri/css/esri.css">
+<style>
+  html, body { height: 100%; width: 100%; margin: 0; padding: 0; }
+  #map { height: 100%; margin: 0; padding: 0; }
+  #loading { 
+    position: fixed;
+    z-index: 999;
+    width: 100%;
+    height: 100%;
+    top:0;
+    left:0;
+  }
+</style>
+
+<script src="https://js.arcgis.com/3.15/"></script>
+<script>
+  var map,kml, getQueryParams,KMLLayer2;
+  require([
+    "esri/map", "esri/layers/KMLLayer",
+      
+"esri/symbols/SimpleLineSymbol",
+"esri/Color",
+"dojo/dom-style",
+    "dojo/domReady!"
+  ], function(
+    Map, KMLLayer, SimpleLineSymbol, Color,
+     domStyle
+  ) {
+    KMLLayer2=KMLLayer
+    getQueryParams = function(qs){
+        qs = qs.split('+').join(' ');
+
+        var params = {},
+            tokens,
+            re = /[?&]?([^=]+)=([^&]*)/g;
+
+        while (tokens = re.exec(qs)) {
+            params[decodeURIComponent(tokens[1])] = decodeURIComponent(tokens[2]);
+        }
+
+        return params;
+    }
+    function hexToRgb(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    
+
+    var kmlUrl, basemap, color;
+    var query = getQueryParams(document.location.search);
+    if(query.url){
+        kmlUrl = query.url;
+    }else{
+        kmlUrl = "https://dl.dropboxusercontent.com/u/2654618/kml/Wyoming.kml"
+    }
+
+    if(query.basemap){
+        basemap = query.basemap;
+    }else{
+        basemap = "osm"
+    }
+    
+    if(query.color){
+        color = hexToRgb("#"+query.color);
+    }else{
+        color= {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+        }
+    }
+    // Generamos un nuevo mapa con un mapa base tipo callejero
+      // Otros tipos: "streets", "hybrid", "topo", "gray", "oceans",
+      // "national-geographic", "osm".
+    map = new Map("map", { 
+      basemap: basemap,
+      center: [-108.663, 42.68],
+      zoom: 3
+    });
+
+
+    //var kmlUrl = "http://localhost:9090/galicia2014.kml";
+    //var kmlUrl = "https://googledrive.com/host/0Bzgk_dG_CbQBfmY1VmRIUkdHXy1sQzlNaERucXRXSmVwQURLU0loamVCOEs4SnZ3bG8wbjQ/galicia2014.kml";
+    //var kmlUrl = "https://dl.dropboxusercontent.com/u/2654618/kml/Wyoming.kml";
+
+     var sls = new SimpleLineSymbol(
+        SimpleLineSymbol.STYLE_DASH,
+        new Color([color.r,color.g,color.b]),
+        2
+      );
+    
+
+    
+    map.on("load", function() {
+        kml = new KMLLayer(kmlUrl, {id:'kml'}); 
+        
+        map.addLayer(kml,0);
+        kml.on("load", function() {
+            console.log("capa cargada")
+            domStyle.set("loading", "display", "none");
+            a=map.getLayer("kml")
+        b=a.getLayers()[0];
+        //b.setRenderer(sls);
+        b.renderer.symbol=sls
+        map.setExtent(b.fullExtent);
+        });
+        
+    });
+
+    
+  });
+</script>
+</head>
+
+<body>
+  <div id="map"> </div>
+
+  <span id="loading"><img src="https://js.arcgis.com/3.15/esri/dijit/images/ajax-loader.gif" /></span>
+</div>
+</body>
+</html>
+
+
+
